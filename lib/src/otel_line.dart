@@ -1,15 +1,16 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_line_suppression.dart';
 
 const _tracerName = 'dartastic_otel_libs_line';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 class LineResult {
+  /// Creates a result.
   const LineResult({
     this.channelId,
     this.userId,
@@ -65,8 +66,13 @@ class LineResult {
   final int? statusCode;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class LineCallResult<T> {
+  /// Creates a call result.
   const LineCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final LineResult? result;
 }
@@ -92,7 +98,7 @@ Future<T> tracedLine<T>({
   final span = _tracer().startSpan(
     'line $operation',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     final r = await invoke();
@@ -100,74 +106,74 @@ Future<T> tracedLine<T>({
       final res = r.result!;
       final extras = <Attribute<Object>>[];
       if (res.channelId != null) {
-        extras.add(OTel.attributeString('line.channel.id', res.channelId!));
+        extras.add(OTelAPI.attributeString('line.channel.id', res.channelId!));
       }
       if (res.userId != null) {
-        extras.add(OTel.attributeString('line.user.id', res.userId!));
+        extras.add(OTelAPI.attributeString('line.user.id', res.userId!));
       }
       if (res.platform != null) {
-        extras.add(OTel.attributeString('line.platform', res.platform!));
+        extras.add(OTelAPI.attributeString('line.platform', res.platform!));
       }
       if (res.loginType != null) {
-        extras.add(OTel.attributeString('line.login.type', res.loginType!));
+        extras.add(OTelAPI.attributeString('line.login.type', res.loginType!));
       }
       if (res.scopesGranted != null) {
-        extras.add(OTel.attributeStringList(
+        extras.add(OTelAPI.attributeStringList(
           'line.scopes.granted',
           res.scopesGranted!,
         ));
       }
       if (res.scopesRequested != null) {
-        extras.add(OTel.attributeStringList(
+        extras.add(OTelAPI.attributeStringList(
           'line.scopes.requested',
           res.scopesRequested!,
         ));
       }
       if (res.idTokenLength != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'line.id_token.length',
           res.idTokenLength!,
         ));
       }
       if (res.accessTokenLength != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'line.access_token.length',
           res.accessTokenLength!,
         ));
       }
       if (res.refreshTokenLength != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'line.refresh_token.length',
           res.refreshTokenLength!,
         ));
       }
       if (res.expiresInSec != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'line.expires_in_sec',
           res.expiresInSec!,
         ));
       }
       if (res.botPrompt != null) {
-        extras.add(OTel.attributeString('line.bot_prompt', res.botPrompt!));
+        extras.add(OTelAPI.attributeString('line.bot_prompt', res.botPrompt!));
       }
       if (res.friendshipStatusChanged != null) {
-        extras.add(OTel.attributeBool(
+        extras.add(OTelAPI.attributeBool(
           'line.friendship_status_changed',
           res.friendshipStatusChanged!,
         ));
       }
       if (res.shareTargetCount != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'line.share.target_count',
           res.shareTargetCount!,
         ));
       }
       if (res.errorCode != null) {
-        extras.add(OTel.attributeString('line.error.code', res.errorCode!));
+        extras.add(OTelAPI.attributeString('line.error.code', res.errorCode!));
         span.setStatus(SpanStatusCode.Error, 'LINE ${res.errorCode}');
       }
       if (res.statusCode != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'http.response.status_code',
           res.statusCode!,
         ));
@@ -175,13 +181,13 @@ Future<T> tracedLine<T>({
           span.setStatus(SpanStatusCode.Error, 'LINE HTTP ${res.statusCode}');
         }
       }
-      if (extras.isNotEmpty) span.addAttributes(OTel.attributes(extras));
+      if (extras.isNotEmpty) span.addAttributes(OTelAPI.attributes(extras));
     }
     return r.value;
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
